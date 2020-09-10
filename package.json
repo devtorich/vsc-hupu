@@ -1,0 +1,75 @@
+{
+  "name": "hupu-rss",
+  "version": "0.0.1",
+  "description": "A VSCode extension",
+  "enableProposedApi": true,
+  "engines": {
+    "vscode": "^1.46.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onView:News",
+    "onView:Unread"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "HUPU-RSS",
+          "title": "HUPU RSS",
+          "icon": "resources/logo.svg"
+        }
+      ]
+    },
+    "views": {
+      "HUPU-RSS": [
+        {
+          "id": "News",
+          "name": "News"
+        },
+        {
+          "id": "Unread",
+          "name": "Unread"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "hupu-rss.refresh",
+        "title": "Refresh",
+        "icon": "$(refresh)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "hupu-rss.refresh",
+          "when": "view == News",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint . --ext .ts,.tsx"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.48.0",
+    "@types/glob": "^7.1.3",
+    "@types/mocha": "^8.0.0",
+    "@types/node": "^14.0.27",
+    "eslint": "^7.6.0",
+    "@typescript-eslint/eslint-plugin": "^3.8.0",
+    "@typescript-eslint/parser": "^3.8.0",
+    "glob": "^7.1.6",
+    "mocha": "^8.1.3",
+    "typescript": "^4.0.2",
+    "vscode-test": "^1.4.0"
+  }
+}

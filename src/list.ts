@@ -7,14 +7,35 @@ export class List implements vscode.TreeDataProvider<vscode.TreeItem> {
   >();
   readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
+  refresh(): void {
+    this._onDidChangeTreeData.fire(undefined);
+  }
+
   getTreeItem(ele: vscode.TreeItem): vscode.TreeItem {
     return ele;
   }
 
   getChildren(element?: vscode.TreeItem): vscode.TreeItem[] {
-    console.log(App.instance.NewsList);
-
     return App.instance.NewsList.map((l) => new Article(l));
+  }
+}
+
+export class ReadedList implements vscode.TreeDataProvider<vscode.TreeItem> {
+  private _onDidChangeTreeData = new vscode.EventEmitter<
+    vscode.TreeItem | undefined
+  >();
+  readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
+
+  refresh(): void {
+    this._onDidChangeTreeData.fire(undefined);
+  }
+
+  getTreeItem(ele: vscode.TreeItem): vscode.TreeItem {
+    return ele;
+  }
+
+  getChildren(element?: vscode.TreeItem): vscode.TreeItem[] {
+    return App.instance.ReadedList.map((l) => new Readed(l));
   }
 }
 
@@ -25,7 +46,7 @@ export class Article extends vscode.TreeItem {
   public readed: boolean;
 
   constructor(public article: Article) {
-    super("");
+    super(article.title);
 
     this.command = {
       command: "hupu.read",
@@ -36,9 +57,39 @@ export class Article extends vscode.TreeItem {
     this.title = article.title;
     this.label = article.label;
     this.link = article.link;
-    this.iconPath = article.iconPath;
     this.tooltip = article.tooltip;
     this.content = article.content;
-    this.readed = false;
+    this.readed = App.instance.ReadedList.map((n) => n.id).includes(article.id);
+
+    if (!this.readed) {
+      this.iconPath = new vscode.ThemeIcon("circle-outline");
+      // } else {
+      //   this.iconPath = new vscode.ThemeIcon("");
+    }
+  }
+}
+
+export class Readed extends vscode.TreeItem {
+  public title: string;
+  public content: string;
+  public link: string;
+  public readed: boolean;
+
+  constructor(public article: Readed) {
+    super(article.title);
+
+    this.command = {
+      command: "hupu.read",
+      title: "Read",
+      arguments: [article, true],
+    };
+
+    this.id = article.id;
+    this.title = article.title;
+    this.label = article.label;
+    this.link = article.link;
+    this.tooltip = article.tooltip;
+    this.content = article.content;
+    this.readed = true;
   }
 }

@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { join as pathJoin } from "path";
-import { List, Article } from "./list";
+import { List, ReadedList, Article, Readed } from "./list";
 import * as request from "request";
 import * as xml2js from "xml2js";
 import * as iconv from "iconv-lite";
@@ -11,6 +11,9 @@ export class App {
     "https://voice.hupu.com/generated/voice/news_nba.xml";
 
   public NewsList: Article[] = [];
+  public ReadedList: Readed[] = [];
+  public ListProvider = new List();
+  public ReadedProvider = new ReadedList();
 
   private constructor(public readonly context: vscode.ExtensionContext) {}
 
@@ -23,15 +26,16 @@ export class App {
     await App.instance.init(context);
   }
 
-  async init(context: vscode.ExtensionContext) {
-    await this.refreshNewsList();
+  init(context: vscode.ExtensionContext) {
+    this.refreshNewsList();
     this.initCommands(context);
-    // this.receiveMessages();
+
+    this.renderListProvider();
   }
 
   renderListProvider() {
-    const ListProvider = new List();
-    vscode.window.registerTreeDataProvider("News", ListProvider);
+    vscode.window.registerTreeDataProvider("News", this.ListProvider);
+    vscode.window.registerTreeDataProvider("Readed", this.ReadedProvider);
   }
 
   initCommands(context: vscode.ExtensionContext) {
@@ -45,64 +49,47 @@ export class App {
     }
   }
 
-  async refreshNewsList() {
-    request.get({ url: this.newsUrl, encoding: null }, (err, res, body) => {
-      new xml2js.Parser({ explicitArray: false }).parseString(
-        iconv.decode(body, "gb2312"),
-        (err: any, resp: any) => {
-          if (!err) {
-            const list: Article[] = (resp?.rss?.channel?.item ?? []).map(
-              (l: any, id: number) => ({
-                id: l.link.replace(/\D/g, ""),
-                title: l.title,
-                label: l.title,
-                link: l.link,
-                iconPath: new vscode.ThemeIcon("circle-outline"),
-                description: l.description,
-                content: l.description,
-                tooltip: l.title,
-              })
-            );
+  refreshNewsList() {
+    this.requestList().then((list: any) => {
+      list.forEach((l: Article) => {
+        const id = l.link.replace(/\D/g, "");
 
-            this.NewsList = list;
-            this.renderListProvider();
-          } else {
-            vscode.window.showErrorMessage(err);
-          }
+        if (
+          !this.NewsList.map((n) => n.id).includes(id) &&
+          !this.ReadedList.map((n) => n.id).includes(id)
+        ) {
+          this.NewsList.push(l);
         }
-      );
+      });
+
+      this.ListProvider.refresh();
+      this.ReadedProvider.refresh();
     });
   }
 
-  readContent(content: Article) {
-    if (!content.id) return vscode.window.showErrorMessage("没找到正文！");
+  readContent(article: Article, isHistory: boolean) {
+    if (!article.id) return vscode.window.showErrorMessage("没找到正文！");
 
-    console.log(content);
+    if (!isHistory) {
+      this.markArticleReadAndAddReaded(article);
+    }
 
     const panel = vscode.window.createWebviewPanel(
       "rss",
-      content?.title ?? "虎扑新闻",
+      article?.title ?? "虎扑新闻",
       vscode.ViewColumn.One,
       { retainContextWhenHidden: true, enableScripts: true }
     );
 
-    content.readed = true;
-
-    panel.webview.html = this.renderContent(content, panel);
-    panel.webview.onDidReceiveMessage((e,src='') => {
-        console.log(e);
-        
+    panel.webview.html = this.renderContentPanel(article, panel);
+    panel.webview.onDidReceiveMessage((e, src = "") => {
       if (e === "web") {
-        vscode.env.openExternal(vscode.Uri.parse(content.link));
-      }else if (e === 'img'){
-        vscode.window
+        vscode.env.openExternal(vscode.Uri.parse(article.link));
       }
-
-
     });
   }
 
-  renderContent(content: Article, panel: vscode.WebviewPanel) {
+  renderContentPanel(article: Article, panel: vscode.WebviewPanel) {
     const css =
       '<style type="text/css">body{font-size:1em;max-width:960px;margin:auto;}</style>';
 
@@ -113,13 +100,10 @@ export class App {
 
     let html =
       css +
-      content.content.replace(
-        /\<\img/g,
-        '<a class="show"  onmouseenter="showImage(this)">显示图片</a><img style="display: none;"'
-      ) +
+      article.content.replace(/\<\img/g, '<img style="display: none;"') +
       `
     <style>
-    .float-btn {
+    .open-link {
         width: 2.2rem;
         height: 2.2rem;
         position: fixed;
@@ -128,11 +112,11 @@ export class App {
         filter: drop-shadow(0 0 0.2rem rgba(0,0,0,.5));
         transition-duration: 0.3s;
     }
-    .float-btn:hover {
+    .open-link:hover {
         filter: drop-shadow(0 0 0.2rem rgba(0,0,0,.5))
                 brightness(130%);
     }
-    .float-btn:active {
+    .open-link:active {
         filter: drop-shadow(0 0 0.2rem rgba(0,0,0,.5))
                 brightness(80%);
     }
@@ -142,13 +126,50 @@ export class App {
     function web() {
         vscode.postMessage('web')
     }
-    function showImage(a) {
-        vscode.postMessage('img',a.nextElementSibling.src)
-    }
 
     </script>
-    <img src="${web_src}" title="Open link" onclick="web()" class="float-btn" style="bottom:1rem;"/>
+    <img src="${web_src}" title="Open with browser" onclick="web()" class="open-link" style="bottom:1rem;"/>
     `;
     return html;
+  }
+
+  requestList() {
+    return new Promise((resolve, reject) => {
+      request.get({ url: this.newsUrl, encoding: null }, (err, res, body) => {
+        new xml2js.Parser({ explicitArray: false }).parseString(
+          iconv.decode(body, "gb2312"),
+          (err: any, resp: any) => {
+            if (!err) {
+              const list: Article[] = (resp?.rss?.channel?.item ?? []).map(
+                (l: any) => ({
+                  id: l.link.replace(/\D/g, ""),
+                  title: l.title,
+                  label: l.title,
+                  link: l.link,
+                  description: l.description,
+                  content: l.description,
+                  tooltip: l.title,
+                })
+              );
+
+              resolve(list);
+            } else {
+              vscode.window.showErrorMessage(err);
+            }
+          }
+        );
+      });
+    });
+  }
+
+  markArticleReadAndAddReaded(article: Article) {
+    // article.readed = true;
+
+    if (!this.ReadedList.map((n) => n.id).includes(article.id)) {
+      this.ReadedList.unshift(article);
+    }
+
+    this.ListProvider.refresh();
+    this.ReadedProvider.refresh();
   }
 }

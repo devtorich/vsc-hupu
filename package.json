@@ -1,7 +1,7 @@
 {
-  "name": "hupu-rss",
+  "name": "vsc-hupu",
   "version": "0.0.1",
-  "description": "A VSCode extension",
+  "description": "Surfing HUPU On VSC",
   "enableProposedApi": true,
   "engines": {
     "vscode": "^1.46.0"
@@ -18,21 +18,21 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "HUPU-RSS",
-          "title": "HUPU RSS",
+          "id": "VSC-HUPU",
+          "title": "HUPU",
           "icon": "resources/logo.svg"
         }
       ]
     },
     "views": {
-      "HUPU-RSS": [
+      "VSC-HUPU": [
         {
           "id": "News",
           "name": "News"
         },
         {
-          "id": "Read",
-          "name": "Read"
+          "id": "Readed",
+          "name": "Readed"
         }
       ]
     },
@@ -44,7 +44,7 @@
       },
       {
         "command": "hupu.read",
-        "title": "Read"
+        "title": "Readed"
       }
     ],
     "menus": {
@@ -61,7 +61,9 @@
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "lint": "eslint . --ext .ts,.tsx"
+    "lint": "eslint . --ext .ts,.tsx",
+		"pretest": "npm run compile",
+		"test": "node ./out/test/runTest.js"
   },
   "devDependencies": {
     "@types/glob": "^7.1.3",

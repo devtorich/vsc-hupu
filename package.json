@@ -1,6 +1,6 @@
 {
   "name": "vsc-hupu",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "description": "Surfing HUPU On VSC",
   "engines": {
     "vscode": "^1.40.0"
@@ -44,6 +44,10 @@
       {
         "command": "hupu.read",
         "title": "Readed"
+      },
+      {
+        "command": "hupu.open-link",
+        "title": "Open with browser"
       }
     ],
     "menus": {
@@ -53,13 +57,21 @@
           "when": "view == News",
           "group": "navigation"
         }
+      ],
+      "view/item/context": [
+        {
+          "command": "hupu.open-link",
+          "when": "viewItem == hupu-article"
+        }
       ]
     }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile-release",
+    "pub": "vsce publish",
     "compile-release": "yarn clean ./out && webpack --mode production",
     "compile": "yarn clean ./out && tsc -p ./",
+    "watch": "yarn clean ./out && tsc -watch -p ./",
     "lint": "eslint src --ext ts",
     "pretest": "npm run compile && npm run lint",
     "test": "node ./out/test/runTest.js",

@@ -1,14 +1,18 @@
 import * as vscode from "vscode";
-import { join as pathJoin } from "path";
-import { List, ReadedList, Article, Readed } from "./list";
+import { List, ReadedList } from "./list";
+import Article from "./article";
+import Readed from "./readed";
 import * as request from "request";
 import * as xml2js from "xml2js";
 import * as iconv from "iconv-lite";
+import { renderContentPanel } from "./utils/helper";
 
 export class App {
   private static _instance?: App;
   private newsUrl: string =
     "https://voice.hupu.com/generated/voice/news_nba.xml";
+
+  private panel?: vscode.WebviewPanel;
 
   public NewsList: Article[] = [];
   public ReadedList: Readed[] = [];
@@ -42,6 +46,7 @@ export class App {
     const commands: [string, (...args: any[]) => any][] = [
       ["hupu.refresh", this.refreshNewsList.bind(this)],
       ["hupu.read", this.readContent.bind(this)],
+      ["hupu.open-link", this.opneLink.bind(this)],
     ];
 
     for (const [cmd, handler] of commands) {
@@ -58,7 +63,7 @@ export class App {
           !this.NewsList.map((n) => n.id).includes(id) &&
           !this.ReadedList.map((n) => n.id).includes(id)
         ) {
-          this.NewsList.push(l);
+          this.NewsList.unshift(l);
         }
       });
 
@@ -74,63 +79,32 @@ export class App {
       this.markArticleReadAndAddReaded(article);
     }
 
-    const panel = vscode.window.createWebviewPanel(
-      "rss",
-      article?.title ?? "虎扑新闻",
-      vscode.ViewColumn.One,
-      { retainContextWhenHidden: true, enableScripts: true }
-    );
+    if (!this.panel) {
+      this.panel = vscode.window.createWebviewPanel(
+        "news",
+        article?.title ?? "虎扑新闻",
+        vscode.ViewColumn.One,
+        { retainContextWhenHidden: true, enableScripts: true }
+      );
+    }
 
-    panel.webview.html = this.renderContentPanel(article, panel);
-    panel.webview.onDidReceiveMessage((e, src = "") => {
+    this.panel.title = article?.title ?? "虎扑新闻";
+    this.panel.webview.html = renderContentPanel(
+      this.context,
+      article,
+      this.panel
+    );
+    this.panel.webview.onDidReceiveMessage((e, src = "") => {
       if (e === "web") {
         vscode.env.openExternal(vscode.Uri.parse(article.link));
       }
     });
   }
 
-  renderContentPanel(article: Article, panel: vscode.WebviewPanel) {
-    const css =
-      '<style type="text/css">body{font-size:1em;max-width:960px;margin:auto;}</style>';
-
-    const web_path = vscode.Uri.file(
-      pathJoin(this.context.extensionPath, "resources/browser.svg")
-    );
-    const web_src = panel.webview.asWebviewUri(web_path);
-
-    let html =
-      css +
-      article.content.replace(/\<\img/g, '<img style="display: none;"') +
-      `
-    <style>
-    .open-link {
-        width: 2.2rem;
-        height: 2.2rem;
-        position: fixed;
-        right: 0.5rem;
-        z-index: 9999;
-        filter: drop-shadow(0 0 0.2rem rgba(0,0,0,.5));
-        transition-duration: 0.3s;
+  opneLink(article: Article) {
+    if (article.link) {
+      vscode.env.openExternal(vscode.Uri.parse(article.link));
     }
-    .open-link:hover {
-        filter: drop-shadow(0 0 0.2rem rgba(0,0,0,.5))
-                brightness(130%);
-    }
-    .open-link:active {
-        filter: drop-shadow(0 0 0.2rem rgba(0,0,0,.5))
-                brightness(80%);
-    }
-    </style>
-    <script type="text/javascript">
-    const vscode = acquireVsCodeApi();
-    function web() {
-        vscode.postMessage('web')
-    }
-
-    </script>
-    <img src="${web_src}" title="Open with browser" onclick="web()" class="open-link" style="bottom:1rem;"/>
-    `;
-    return html;
   }
 
   requestList() {
@@ -143,14 +117,17 @@ export class App {
               const list: Article[] = (resp?.rss?.channel?.item ?? []).map(
                 (l: any) => ({
                   id: l.link.replace(/\D/g, ""),
-                  title: l.title,
-                  label: l.title,
+                  title: l.title || "虎扑新闻",
+                  label: l.title || "虎扑新闻",
                   link: l.link,
                   description: l.description,
                   content: l.description,
                   tooltip: l.title,
+                  time: l.pubDate ? new Date(l.pubDate).getTime() : Date.now(),
                 })
               );
+
+              list.sort((a, b) => a.time - b.time);
 
               resolve(list);
             } else {
@@ -163,8 +140,6 @@ export class App {
   }
 
   markArticleReadAndAddReaded(article: Article) {
-    // article.readed = true;
-
     if (!this.ReadedList.map((n) => n.id).includes(article.id)) {
       this.ReadedList.unshift(article);
     }

@@ -79,6 +79,8 @@ export class App {
       this.markArticleReadAndAddReaded(article);
     }
 
+    console.log(this.panel);
+
     if (!this.panel) {
       this.panel = vscode.window.createWebviewPanel(
         "news",
@@ -98,6 +100,11 @@ export class App {
       if (e === "web") {
         vscode.env.openExternal(vscode.Uri.parse(article.link));
       }
+    });
+
+    // when panel closed by user, set it undefined
+    this.panel.onDidDispose((e) => {
+      this.panel = undefined;
     });
   }
 

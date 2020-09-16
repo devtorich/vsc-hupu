@@ -9,3 +9,7 @@ First release
 - Contextmenu open link with browser
 - Mounse enter the image link will show image thumb
 - Always open in one tab
+
+## v0.0.13 (2020-09-16)
+
+- fix on tab bug, when user closes tab will not open new tab

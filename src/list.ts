@@ -48,8 +48,7 @@ export class AccountsList implements vscode.TreeDataProvider<vscode.TreeItem> {
   >();
   readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
-  async refresh(accounts: Account) {
-    await App.config.update("accounts", accounts, true);
+  async refresh() {
     this._onDidChangeTreeData.fire(undefined);
   }
 
@@ -59,6 +58,7 @@ export class AccountsList implements vscode.TreeDataProvider<vscode.TreeItem> {
 
   getChildren(element?: vscode.TreeItem): vscode.TreeItem[] {
     const accounts = App.config.accounts;
+
     return Object.keys(accounts).map((key) => new Account(key, accounts[key]));
   }
 }

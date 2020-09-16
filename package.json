@@ -1,6 +1,6 @@
 {
   "name": "vsc-hupu",
-  "version": "0.0.21",
+  "version": "0.0.3",
   "description": "Surfing HUPU On VSC",
   "engines": {
     "vscode": "^1.40.0"
@@ -14,9 +14,9 @@
     "feed"
   ],
   "activationEvents": [
-    "onView:Accounts",
     "onView:News",
-    "onView:Read"
+    "onView:Read",
+    "onView:Accounts"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -42,16 +42,16 @@
     "views": {
       "VSC-HUPU": [
         {
-          "id": "Accounts",
-          "name": "Local Accounts"
-        },
-        {
           "id": "News",
           "name": "News"
         },
         {
           "id": "Readed",
           "name": "Readed"
+        },
+        {
+          "id": "Accounts",
+          "name": "Local Accounts"
         }
       ]
     },

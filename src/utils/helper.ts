@@ -32,6 +32,7 @@ export const renderContentPanel = (
       z-index: 9999;
       filter: drop-shadow(0 0 0.2rem rgba(0,0,0,.5));
       transition-duration: 0.3s;
+      cursor: pointer;
   }
   .open-link:hover {
       filter: drop-shadow(0 0 0.2rem rgba(0,0,0,.5))

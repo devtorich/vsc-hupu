@@ -5,6 +5,7 @@ export default class Account extends vscode.TreeItem {
   public name?: string;
   public key: string;
   public articles: Article[];
+  public readeds: Article[];
 
   constructor(key: string, public account: Account) {
     super("");
@@ -14,6 +15,7 @@ export default class Account extends vscode.TreeItem {
     this.id = key;
     this.key = key;
     this.articles = account.articles;
+    this.readeds = account.readeds;
     this.label = `${account.name} (${account.articles.length})`;
     this.iconPath = new vscode.ThemeIcon("account");
   }

@@ -1,7 +1,5 @@
 import * as vscode from "vscode";
-import * as request from "request";
-import * as xml2js from "xml2js";
-import * as iconv from "iconv-lite";
+import Event from "./event";
 import { List, ReadedList, AccountsList } from "./list";
 import Article from "./article";
 import Readed from "./readed";
@@ -10,8 +8,6 @@ import { renderContentPanel, uid } from "./utils/helper";
 
 export class App {
   private static _instance?: App;
-  private newsUrl: string =
-    "https://voice.hupu.com/generated/voice/news_nba.xml";
 
   private panel?: vscode.WebviewPanel;
 
@@ -37,23 +33,27 @@ export class App {
   }
 
   init(context: vscode.ExtensionContext) {
-    // this.refreshNewsList();
+    this.getLocalList();
     this.initCommands(context);
 
     this.renderListProvider();
   }
 
-  renderListProvider() {
-    vscode.window.registerTreeDataProvider("Accounts", this.AccountsProvider);
-    vscode.window.registerTreeDataProvider("News", this.ListProvider);
-    vscode.window.registerTreeDataProvider("Readed", this.ReadedProvider);
+  getLocalList() {
+    const accounts = App.config.get<any>("accounts");
+    const currentAccount = accounts[Object.keys(accounts)[0]];
+
+    if (currentAccount) {
+      this.NewsList = currentAccount.articles;
+      this.ReadedList = currentAccount.readeds;
+    }
   }
 
   initCommands(context: vscode.ExtensionContext) {
     const commands: [string, (...args: any[]) => any][] = [
       ["hupu.refresh", this.refreshNewsList.bind(this)],
       ["hupu.read", this.readContent.bind(this)],
-      ["hupu.open-link", this.opneLink.bind(this)],
+      ["hupu.open-link", Event.opneLink.bind(this)],
       ["hupu.add-account", this.createNewAccount.bind(this)],
       ["hupu.delete-account", this.deleteAccount.bind(this)],
     ];
@@ -63,10 +63,17 @@ export class App {
     }
   }
 
-  refreshNewsList() {
-    const accounts = { ...App.config.get<any>("accounts") };
+  renderListProvider() {
+    vscode.window.registerTreeDataProvider("Accounts", this.AccountsProvider);
+    vscode.window.registerTreeDataProvider("News", this.ListProvider);
+    vscode.window.registerTreeDataProvider("Readed", this.ReadedProvider);
+  }
 
-    this.requestList().then((list: any) => {
+  async refreshNewsList() {
+    const accounts = App.config.get<any>("accounts");
+    const currentAccount = accounts[Object.keys(accounts)[0]];
+
+    Event.requestList().then((list: any) => {
       list.forEach((l: Article) => {
         const id = l.link.replace(/\D/g, "");
         if (
@@ -77,13 +84,16 @@ export class App {
         }
       });
 
-      Object.keys(accounts).forEach((key) => {
-        accounts[key].articles = this.NewsList;
-      });
+      currentAccount.articles = [];
+      currentAccount.articles = this.NewsList;
+
+      (async () => {
+        await App.config.update("accounts", accounts, true);
+        this.AccountsProvider.refresh();
+      })();
 
       this.ListProvider.refresh();
       this.ReadedProvider.refresh();
-      this.AccountsProvider.refresh(accounts);
     });
   }
 
@@ -121,51 +131,23 @@ export class App {
     });
   }
 
-  opneLink(article: Article) {
-    if (article.link) {
-      vscode.env.openExternal(vscode.Uri.parse(article.link));
-    }
-  }
+  async markArticleReadAndAddReaded(article: Article) {
+    // const accounts = { ...App.config.accounts };
+    // const currentAccount: Account = accounts[Object.keys(accounts)[0]];
 
-  requestList() {
-    return new Promise((resolve, reject) => {
-      request.get({ url: this.newsUrl, encoding: null }, (err, res, body) => {
-        new xml2js.Parser({ explicitArray: false }).parseString(
-          iconv.decode(body, "gb2312"),
-          (err: any, resp: any) => {
-            if (!err) {
-              const list: Article[] = (resp?.rss?.channel?.item ?? []).map(
-                (l: any) => ({
-                  id: l.link.replace(/\D/g, ""),
-                  title: l.title || "虎扑新闻",
-                  label: l.title || "虎扑新闻",
-                  link: l.link,
-                  description: l.description,
-                  content: l.description,
-                  tooltip: l.title,
-                  time: l.pubDate ? new Date(l.pubDate).getTime() : Date.now(),
-                })
-              );
-
-              list.sort((a, b) => a.time - b.time);
-
-              resolve(list);
-            } else {
-              vscode.window.showErrorMessage(err);
-            }
-          }
-        );
-      });
-    });
-  }
-
-  markArticleReadAndAddReaded(article: Article) {
     if (!this.ReadedList.map((n) => n.id).includes(article.id)) {
       this.ReadedList.unshift(article);
+      // currentAccount.readeds.unshift(article);
     }
 
     this.ListProvider.refresh();
     this.ReadedProvider.refresh();
+
+    // currentAccount.readeds = [];
+    // currentAccount.readeds = this.ReadedList;
+
+    // await App.config.update("accounts.readeds", accounts.readeds, true);
+    // this.AccountsProvider.refresh();
   }
 
   async createNewAccount() {
@@ -181,19 +163,24 @@ export class App {
         prompt: "填写本地账户名，只做展示",
       });
 
-      await this.createLocalAccount(name);
+      await this.createLocalAccount(name || "JR");
     }
   }
 
-  async createLocalAccount(name: string = "JR") {
+  async createLocalAccount(name: string) {
     const accounts = App.config.get<any>("accounts");
 
     accounts[uid()] = {
       name,
       type: "local",
       articles: [],
+      readeds: [],
     };
-    this.AccountsProvider.refresh(accounts);
+
+    await App.config.update("accounts", accounts, true);
+    this.AccountsProvider.refresh();
+
+    this.refreshNewsList();
   }
 
   async deleteAccount(account: Account) {
@@ -201,6 +188,7 @@ export class App {
 
     delete accounts[account.key];
 
-    this.AccountsProvider.refresh(accounts);
+    await App.config.update("accounts", accounts, true);
+    this.AccountsProvider.refresh();
   }
 }

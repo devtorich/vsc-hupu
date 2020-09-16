@@ -1,11 +1,12 @@
 import * as vscode from "vscode";
-import { List, ReadedList } from "./list";
-import Article from "./article";
-import Readed from "./readed";
 import * as request from "request";
 import * as xml2js from "xml2js";
 import * as iconv from "iconv-lite";
-import { renderContentPanel } from "./utils/helper";
+import { List, ReadedList, AccountsList } from "./list";
+import Article from "./article";
+import Readed from "./readed";
+import Account from "./account";
+import { renderContentPanel, uid } from "./utils/helper";
 
 export class App {
   private static _instance?: App;
@@ -18,11 +19,16 @@ export class App {
   public ReadedList: Readed[] = [];
   public ListProvider = new List();
   public ReadedProvider = new ReadedList();
+  public AccountsProvider = new AccountsList();
 
   private constructor(public readonly context: vscode.ExtensionContext) {}
 
   static get instance(): App {
     return App._instance!;
+  }
+
+  static get config() {
+    return vscode.workspace.getConfiguration("hupu");
   }
 
   static async initInstance(context: vscode.ExtensionContext) {
@@ -31,13 +37,14 @@ export class App {
   }
 
   init(context: vscode.ExtensionContext) {
-    this.refreshNewsList();
+    // this.refreshNewsList();
     this.initCommands(context);
 
     this.renderListProvider();
   }
 
   renderListProvider() {
+    vscode.window.registerTreeDataProvider("Accounts", this.AccountsProvider);
     vscode.window.registerTreeDataProvider("News", this.ListProvider);
     vscode.window.registerTreeDataProvider("Readed", this.ReadedProvider);
   }
@@ -47,6 +54,8 @@ export class App {
       ["hupu.refresh", this.refreshNewsList.bind(this)],
       ["hupu.read", this.readContent.bind(this)],
       ["hupu.open-link", this.opneLink.bind(this)],
+      ["hupu.add-account", this.createNewAccount.bind(this)],
+      ["hupu.delete-account", this.deleteAccount.bind(this)],
     ];
 
     for (const [cmd, handler] of commands) {
@@ -55,10 +64,11 @@ export class App {
   }
 
   refreshNewsList() {
+    const accounts = { ...App.config.get<any>("accounts") };
+
     this.requestList().then((list: any) => {
       list.forEach((l: Article) => {
         const id = l.link.replace(/\D/g, "");
-
         if (
           !this.NewsList.map((n) => n.id).includes(id) &&
           !this.ReadedList.map((n) => n.id).includes(id)
@@ -67,8 +77,13 @@ export class App {
         }
       });
 
+      Object.keys(accounts).forEach((key) => {
+        accounts[key].articles = this.NewsList;
+      });
+
       this.ListProvider.refresh();
       this.ReadedProvider.refresh();
+      this.AccountsProvider.refresh(accounts);
     });
   }
 
@@ -78,8 +93,6 @@ export class App {
     if (!isHistory) {
       this.markArticleReadAndAddReaded(article);
     }
-
-    console.log(this.panel);
 
     if (!this.panel) {
       this.panel = vscode.window.createWebviewPanel(
@@ -153,5 +166,41 @@ export class App {
 
     this.ListProvider.refresh();
     this.ReadedProvider.refresh();
+  }
+
+  async createNewAccount() {
+    const accounts = App.config.get<any>("accounts");
+
+    if (Object.keys(accounts).length > 0) {
+      vscode.window.showInformationMessage(
+        "已经有一个账户，可以先删除当前账户再新建"
+      );
+    } else {
+      const name = await vscode.window.showInputBox({
+        placeHolder: "JR",
+        prompt: "填写本地账户名，只做展示",
+      });
+
+      await this.createLocalAccount(name);
+    }
+  }
+
+  async createLocalAccount(name: string = "JR") {
+    const accounts = App.config.get<any>("accounts");
+
+    accounts[uid()] = {
+      name,
+      type: "local",
+      articles: [],
+    };
+    this.AccountsProvider.refresh(accounts);
+  }
+
+  async deleteAccount(account: Account) {
+    const accounts = { ...App.config.get<any>("accounts") };
+
+    delete accounts[account.key];
+
+    this.AccountsProvider.refresh(accounts);
   }
 }

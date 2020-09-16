@@ -1,6 +1,6 @@
 {
   "name": "vsc-hupu",
-  "version": "0.0.13",
+  "version": "0.0.21",
   "description": "Surfing HUPU On VSC",
   "engines": {
     "vscode": "^1.40.0"
@@ -8,12 +8,28 @@
   "categories": [
     "Other"
   ],
+  "keywords": [
+    "hupu",
+    "news",
+    "feed"
+  ],
   "activationEvents": [
+    "onView:Accounts",
     "onView:News",
     "onView:Read"
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "configuration": {
+      "title": "hupu",
+      "properties": {
+        "hupu.accounts": {
+          "type": "object",
+          "default": {},
+          "description": "Accounts"
+        }
+      }
+    },
     "viewsContainers": {
       "activitybar": [
         {
@@ -26,6 +42,10 @@
     "views": {
       "VSC-HUPU": [
         {
+          "id": "Accounts",
+          "name": "Local Accounts"
+        },
+        {
           "id": "News",
           "name": "News"
         },
@@ -36,6 +56,11 @@
       ]
     },
     "commands": [
+      {
+        "command": "hupu.add-account",
+        "title": "Create local account",
+        "icon": "$(add)"
+      },
       {
         "command": "hupu.refresh",
         "title": "Refresh",
@@ -48,10 +73,19 @@
       {
         "command": "hupu.open-link",
         "title": "Open with browser"
+      },
+      {
+        "command": "hupu.delete-account",
+        "title": "Delete account"
       }
     ],
     "menus": {
       "view/title": [
+        {
+          "command": "hupu.add-account",
+          "when": "view == Accounts",
+          "group": "navigation"
+        },
         {
           "command": "hupu.refresh",
           "when": "view == News",
@@ -62,6 +96,10 @@
         {
           "command": "hupu.open-link",
           "when": "viewItem == hupu-article"
+        },
+        {
+          "command": "hupu.delete-account",
+          "when": "viewItem == hupu-account"
         }
       ]
     }

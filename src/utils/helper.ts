@@ -74,3 +74,7 @@ export const renderContentPanel = (
 
   return html;
 };
+
+export const uid = () => {
+  return Math.random().toString(32).slice(2);
+};

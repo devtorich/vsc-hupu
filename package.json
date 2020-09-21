@@ -15,18 +15,22 @@
   ],
   "activationEvents": [
     "onView:News",
-    "onView:Read",
-    "onView:Accounts"
+    "onView:Read"
   ],
   "main": "./out/extension.js",
   "contributes": {
     "configuration": {
       "title": "hupu",
       "properties": {
-        "hupu.accounts": {
+        "hupu.locallist": {
           "type": "object",
           "default": {},
-          "description": "Accounts"
+          "description": "LocalList"
+        },
+        "hupu.localreaded": {
+          "type": "object",
+          "default": {},
+          "description": "Localreaded"
         }
       }
     },
@@ -48,19 +52,10 @@
         {
           "id": "Readed",
           "name": "Readed"
-        },
-        {
-          "id": "Accounts",
-          "name": "Local Accounts"
         }
       ]
     },
     "commands": [
-      {
-        "command": "hupu.add-account",
-        "title": "Create local account",
-        "icon": "$(add)"
-      },
       {
         "command": "hupu.refresh",
         "title": "Refresh",
@@ -73,19 +68,10 @@
       {
         "command": "hupu.open-link",
         "title": "Open with browser"
-      },
-      {
-        "command": "hupu.delete-account",
-        "title": "Delete account"
       }
     ],
     "menus": {
       "view/title": [
-        {
-          "command": "hupu.add-account",
-          "when": "view == Accounts",
-          "group": "navigation"
-        },
         {
           "command": "hupu.refresh",
           "when": "view == News",
@@ -96,10 +82,6 @@
         {
           "command": "hupu.open-link",
           "when": "viewItem == hupu-article"
-        },
-        {
-          "command": "hupu.delete-account",
-          "when": "viewItem == hupu-account"
         }
       ]
     }

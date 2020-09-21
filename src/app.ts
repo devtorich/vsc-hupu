@@ -1,9 +1,8 @@
 import * as vscode from "vscode";
 import Event from "./event";
-import { List, ReadedList, AccountsList } from "./list";
+import { List, ReadedList } from "./list";
 import Article from "./article";
 import Readed from "./readed";
-import Account from "./account";
 import { renderContentPanel, uid } from "./utils/helper";
 
 export class App {
@@ -15,7 +14,6 @@ export class App {
   public ReadedList: Readed[] = [];
   public ListProvider = new List();
   public ReadedProvider = new ReadedList();
-  public AccountsProvider = new AccountsList();
 
   private constructor(public readonly context: vscode.ExtensionContext) {}
 
@@ -33,20 +31,17 @@ export class App {
   }
 
   init(context: vscode.ExtensionContext) {
-    this.getLocalList();
     this.initCommands(context);
 
-    this.renderListProvider();
-  }
+    // this.rmLocals();
 
-  getLocalList() {
-    const accounts = App.config.get<any>("accounts");
-    const currentAccount = accounts[Object.keys(accounts)[0]];
+    this.getLocals().then((res: any) => {
+      this.renderListProvider();
 
-    if (currentAccount) {
-      this.NewsList = currentAccount.articles;
-      this.ReadedList = currentAccount.readeds;
-    }
+      if (!!res.fetch) {
+        this.refreshNewsList();
+      }
+    });
   }
 
   initCommands(context: vscode.ExtensionContext) {
@@ -54,8 +49,6 @@ export class App {
       ["hupu.refresh", this.refreshNewsList.bind(this)],
       ["hupu.read", this.readContent.bind(this)],
       ["hupu.open-link", Event.opneLink.bind(this)],
-      ["hupu.add-account", this.createNewAccount.bind(this)],
-      ["hupu.delete-account", this.deleteAccount.bind(this)],
     ];
 
     for (const [cmd, handler] of commands) {
@@ -63,15 +56,50 @@ export class App {
     }
   }
 
+  async rmLocals() {
+    const locallist = { ...App.config.get<any>("locallist") };
+    const localreaded = { ...App.config.get<any>("localreaded") };
+
+    Object.keys(locallist).forEach((key) => {
+      delete locallist[key];
+    });
+
+    Object.keys(localreaded).forEach((key) => {
+      delete localreaded[key];
+    });
+
+    await App.config.update("locallist", locallist, true);
+    await App.config.update("localreaded", localreaded, true);
+  }
+
+  getLocals() {
+    return new Promise((resolve) => {
+      const locallist = App.config.get<any>("locallist");
+      const localreaded = App.config.get<any>("localreaded");
+
+      if (!Object.keys(locallist).length) {
+        this.createLocals("locallist");
+      } else {
+        this.NewsList = locallist.list;
+      }
+
+      if (!Object.keys(localreaded).length) {
+        this.createLocals("localreaded");
+      } else {
+        this.ReadedList = localreaded.list;
+      }
+
+      resolve({ fetch: !Object.keys(locallist).length });
+    });
+  }
+
   renderListProvider() {
-    vscode.window.registerTreeDataProvider("Accounts", this.AccountsProvider);
     vscode.window.registerTreeDataProvider("News", this.ListProvider);
     vscode.window.registerTreeDataProvider("Readed", this.ReadedProvider);
   }
 
   async refreshNewsList() {
-    const accounts = App.config.get<any>("accounts");
-    const currentAccount = accounts[Object.keys(accounts)[0]];
+    const locallist = App.config.get<any>("locallist");
 
     Event.requestList().then((list: any) => {
       list.forEach((l: Article) => {
@@ -84,12 +112,10 @@ export class App {
         }
       });
 
-      currentAccount.articles = [];
-      currentAccount.articles = this.NewsList;
-
+      locallist.list = [];
+      locallist.list = this.NewsList;
       (async () => {
-        await App.config.update("accounts", accounts, true);
-        this.AccountsProvider.refresh();
+        await App.config.update("locallist", locallist, true);
       })();
 
       this.ListProvider.refresh();
@@ -131,64 +157,28 @@ export class App {
     });
   }
 
-  async markArticleReadAndAddReaded(article: Article) {
-    // const accounts = { ...App.config.accounts };
-    // const currentAccount: Account = accounts[Object.keys(accounts)[0]];
+  markArticleReadAndAddReaded(article: Article) {
+    const localreaded = App.config.get<any>("localreaded");
 
     if (!this.ReadedList.map((n) => n.id).includes(article.id)) {
       this.ReadedList.unshift(article);
-      // currentAccount.readeds.unshift(article);
+      localreaded.list.unshift(article);
     }
 
     this.ListProvider.refresh();
     this.ReadedProvider.refresh();
 
-    // currentAccount.readeds = [];
-    // currentAccount.readeds = this.ReadedList;
-
-    // await App.config.update("accounts.readeds", accounts.readeds, true);
-    // this.AccountsProvider.refresh();
+    (async () => {
+      await App.config.update("localreaded", localreaded, true);
+    })();
   }
 
-  async createNewAccount() {
-    const accounts = App.config.get<any>("accounts");
+  async createLocals(name: string) {
+    const local = App.config.get<any>(name);
 
-    if (Object.keys(accounts).length > 0) {
-      vscode.window.showInformationMessage(
-        "已经有一个账户，可以先删除当前账户再新建"
-      );
-    } else {
-      const name = await vscode.window.showInputBox({
-        placeHolder: "JR",
-        prompt: "填写本地账户名，只做展示",
-      });
+    local.type = "local";
+    local.list = [];
 
-      await this.createLocalAccount(name || "JR");
-    }
-  }
-
-  async createLocalAccount(name: string) {
-    const accounts = App.config.get<any>("accounts");
-
-    accounts[uid()] = {
-      name,
-      type: "local",
-      articles: [],
-      readeds: [],
-    };
-
-    await App.config.update("accounts", accounts, true);
-    this.AccountsProvider.refresh();
-
-    this.refreshNewsList();
-  }
-
-  async deleteAccount(account: Account) {
-    const accounts = { ...App.config.get<any>("accounts") };
-
-    delete accounts[account.key];
-
-    await App.config.update("accounts", accounts, true);
-    this.AccountsProvider.refresh();
+    await App.config.update(name, local, true);
   }
 }

@@ -1,5 +1,9 @@
 # Change Log
 
+## v1.0.1 (2020-09-21)
+
+- Fix over one window read the same artile will throw error
+
 ## v1.0.0 (2020-09-21)
 
 - 🎉🎉 Release first version
@@ -7,7 +11,7 @@
 
 ## v0.0.13 (2020-09-16)
 
-- fix on tab bug, when user closes tab will not open new tab
+- Fix on tab bug, when user closes tab will not open new tab
 
 ## v0.0.12 (2020-09-15)
 

@@ -1,6 +1,6 @@
 {
   "name": "vsc-hupu",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Surfing HUPU On VSC",
   "engines": {
     "vscode": "^1.40.0"
@@ -88,6 +88,7 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run compile-release",
+    "pkg": "yarn clean vsc-hupu-*.vsix && vsce package",
     "pub": "vsce publish",
     "compile-release": "yarn clean ./out && webpack --mode production",
     "compile": "yarn clean ./out && tsc -p ./",

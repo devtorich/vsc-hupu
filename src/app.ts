@@ -3,7 +3,7 @@ import Event from "./event";
 import { List, ReadedList } from "./list";
 import Article from "./article";
 import Readed from "./readed";
-import { renderContentPanel, uid } from "./utils/helper";
+import { renderContentPanel } from "./utils/helper";
 
 export class App {
   private static _instance?: App;
@@ -162,7 +162,10 @@ export class App {
 
     if (!this.ReadedList.map((n) => n.id).includes(article.id)) {
       this.ReadedList.unshift(article);
-      localreaded.list.unshift(article);
+
+      if (!localreaded.list.map((l: Article) => l.id).includes(article.id)) {
+        localreaded.list.unshift(article);
+      }
     }
 
     this.ListProvider.refresh();

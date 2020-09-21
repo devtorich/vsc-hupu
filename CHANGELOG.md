@@ -1,7 +1,8 @@
 # Change Log
 
-## v0.0.3 (2020-09-21)
+## v1.0.0 (2020-09-21)
 
+- 🎉🎉 Release first version
 - New feature: save list to local
 
 ## v0.0.13 (2020-09-16)

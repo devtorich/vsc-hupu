@@ -88,7 +88,7 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run compile-release",
-    "pub": "vsce publish",
+    "pub": "vsce publish minor",
     "compile-release": "yarn clean ./out && webpack --mode production",
     "compile": "yarn clean ./out && tsc -p ./",
     "watch": "yarn clean ./out && tsc -watch -p ./",

@@ -16,5 +16,6 @@ steps:
   displayName: 'Install Node.js'
 
 - script: |
+    npm i -g vsce
     yarn pub
   displayName: 'publish'

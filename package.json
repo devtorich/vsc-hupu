@@ -1,6 +1,6 @@
 {
   "name": "vsc-hupu",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Surfing HUPU On VSC",
   "engines": {
     "vscode": "^1.40.0"

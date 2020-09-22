@@ -1,6 +1,6 @@
 {
   "name": "vsc-hupu",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Surfing HUPU On VSC",
   "engines": {
     "vscode": "^1.40.0"
@@ -125,7 +125,7 @@
   "publisher": "codingwell",
   "repository": {
     "type": "git",
-    "url": "git@github.com:daoyi7/vsc-hupu.git"
+    "url": "daoyi7/vsc-hupu.git"
   },
   "icon": "logo.png",
   "license": "MIT"

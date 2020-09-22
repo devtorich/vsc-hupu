@@ -1,5 +1,9 @@
 # Change Log
 
+## v1.0.2 (2020-09-22)
+
+- Fix package repository url
+
 ## v1.0.1 (2020-09-21)
 
 - Fix over one window read the same artile will throw error

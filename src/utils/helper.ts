@@ -29,6 +29,7 @@ export const renderContentPanel = (
       height: 2.2rem;
       position: fixed;
       right: 0.5rem;
+      bottom: 1rem;
       z-index: 9999;
       filter: drop-shadow(0 0 0.2rem rgba(0,0,0,.5));
       transition-duration: 0.3s;

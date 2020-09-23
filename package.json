@@ -1,6 +1,6 @@
 {
   "name": "vsc-hupu",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Surfing HUPU On VSC",
   "engines": {
     "vscode": "^1.40.0"
@@ -116,6 +116,7 @@
     "webpack-cli": "^3.3.12"
   },
   "dependencies": {
+    "@types/lodash": "^4.14.161",
     "@types/request": "^2.48.5",
     "@types/xml2js": "^0.4.5",
     "iconv-lite": "^0.6.2",

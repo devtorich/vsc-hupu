@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { uniqBy } from "lodash";
 import Event from "./event";
 import { List, ReadedList } from "./list";
 import Article from "./article";
@@ -76,6 +77,9 @@ export class App {
     return new Promise((resolve) => {
       const locallist = App.config.get<any>("locallist");
       const localreaded = App.config.get<any>("localreaded");
+
+      locallist.list = uniqBy(locallist.list, "id");
+      localreaded.list = uniqBy(localreaded.list, "id");
 
       if (!Object.keys(locallist).length) {
         this.createLocals("locallist");

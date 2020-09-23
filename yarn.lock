@@ -58,6 +58,10 @@
   version "7.0.6"
   resolved "http://npm-registry.stnts.com/@types%2fjson-schema/-/json-schema-7.0.6.tgz#f4c7ec43e81b319a9815115031709f26987891f0"
 
+"@types/lodash@^4.14.161":
+  version "4.14.161"
+  resolved "http://npm-registry.stnts.com/@types%2flodash/-/lodash-4.14.161.tgz#a21ca0777dabc6e4f44f3d07f37b765f54188b18"
+
 "@types/minimatch@*":
   version "3.0.3"
   resolved "http://npm-registry.stnts.com/@types%2fminimatch/-/minimatch-3.0.3.tgz#3dca0e3f33b200fc7d1139c0cd96c1268cadfd9d"
@@ -83,9 +87,9 @@
   version "4.0.0"
   resolved "http://npm-registry.stnts.com/@types%2ftough-cookie/-/tough-cookie-4.0.0.tgz#fef1904e4668b6e5ecee60c52cc6a078ffa6697d"
 
-"@types/vscode@^1.48.0":
-  version "1.48.0"
-  resolved "http://npm-registry.stnts.com/@types%2fvscode/-/vscode-1.48.0.tgz#c1841ccf80086d53b35a9d7f2eb3b4d949bd2d2f"
+"@types/vscode@^1.40.0":
+  version "1.49.0"
+  resolved "http://npm-registry.stnts.com/@types%2fvscode/-/vscode-1.49.0.tgz#f3731d97d7e8b2697510eb26f6e6d04ee8c17352"
 
 "@types/xml2js@^0.4.5":
   version "0.4.5"

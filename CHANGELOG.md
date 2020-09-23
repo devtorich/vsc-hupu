@@ -1,5 +1,9 @@
 # Change Log
 
+## v1.0.3 (2020-09-22)
+
+- Uniq local list once open
+
 ## v1.0.2 (2020-09-22)
 
 - Fix package repository url

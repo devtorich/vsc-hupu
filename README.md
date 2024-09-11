@@ -2,7 +2,7 @@
 
 > 在 Visual Studio Code 浏览虎扑新闻
 
-[![version](https://vsmarketplacebadge.apphb.com/version-short/codingwell.vsc-hupu.svg)](https://marketplace.visualstudio.com/items?itemName=luyuhuang.rss)
+[![version](https://vsmarketplacebadge.apphb.com/version-short/codingwell.vsc-hupu.svg)](https://marketplace.visualstudio.com/items?itemName=CodingWell.vsc-hupu)
 
 ## 介绍
 
